@@ -14,13 +14,103 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      order_items: {
+        Row: {
+          id: string
+          item_id: string
+          line_total: number
+          name: string
+          order_id: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          id?: string
+          item_id: string
+          line_total: number
+          name: string
+          order_id: string
+          quantity: number
+          unit_price: number
+        }
+        Update: {
+          id?: string
+          item_id?: string
+          line_total?: number
+          name?: string
+          order_id?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          address: string
+          created_at: string
+          customer_name: string
+          id: string
+          idempotency_key: string
+          notes: string | null
+          order_number: string
+          payment_method: string
+          phone: string
+          status: string
+          total: number
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          customer_name: string
+          id?: string
+          idempotency_key: string
+          notes?: string | null
+          order_number?: string
+          payment_method?: string
+          phone: string
+          status?: string
+          total: number
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          customer_name?: string
+          id?: string
+          idempotency_key?: string
+          notes?: string | null
+          order_number?: string
+          payment_method?: string
+          phone?: string
+          status?: string
+          total?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      place_order: {
+        Args: {
+          _address: string
+          _items: Json
+          _key: string
+          _name: string
+          _notes: string
+          _phone: string
+          _total: number
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
