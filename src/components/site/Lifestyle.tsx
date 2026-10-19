@@ -7,7 +7,7 @@ export function Lifestyle() {
   const b = useParallax<HTMLDivElement>(0.07);
   const [l1, l2, l3, l4] = images.lifestyle;
 
-  const Tile = ({ img, cls }: { img: typeof l1; cls: string }) => (
+  const Tile = ({ img, cls }: { img: { src: string; label: string }; cls: string }) => (
     <figure className={cn("group relative overflow-hidden rounded-[1.75rem]", cls)}>
       <img src={img.src} alt={img.label} loading="lazy" className="h-full w-full object-cover transition-transform duration-[1.4s] ease-premium group-hover:scale-105" />
       <figcaption className="absolute bottom-3 left-3 rounded-full bg-background/85 px-3 py-1 text-xs font-medium backdrop-blur">{img.label}</figcaption>
