@@ -47,10 +47,7 @@ export function CartDrawer() {
         {lines.length > 0 && (
           <div className="border-t p-6">
             <div className="flex justify-between text-lg"><span>Subtotal · {count} items</span><span className="font-display font-semibold">${total.toFixed(2)}</span></div>
-            <p className="mt-1 text-xs text-muted-foreground">Taxes calculated at checkout.</p>
-            <Button size="lg" className="mt-5 w-full" onClick={() => { toast.success("Order received — this is a demo, no payment taken."); clear(); setOpen(false); }}>
-              Checkout
-            </Button>
+            <CheckoutForm />
           </div>
         )}
       </aside>
