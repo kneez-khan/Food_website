@@ -2,6 +2,8 @@
 
 Online food ordering website for a modern NYC food and café brand.
 
+**Live website:** https://screenshot-perfect-1814.lovable.app
+
 ## Features
 
 - Interactive menu with category filters
