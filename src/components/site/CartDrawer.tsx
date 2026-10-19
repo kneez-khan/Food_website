@@ -1,4 +1,5 @@
 import { Minus, Plus, ShoppingBag, X } from "lucide-react";
+import { OrderForm } from "./OrderForm";
 import { toast } from "sonner";
 import { useCart } from "@/lib/cart";
 import { Button } from "./Btn";
@@ -47,7 +48,7 @@ export function CartDrawer() {
         {lines.length > 0 && (
           <div className="border-t p-6">
             <div className="flex justify-between text-lg"><span>Subtotal · {count} items</span><span className="font-display font-semibold">${total.toFixed(2)}</span></div>
-            <CheckoutForm />
+           <OrderForm />
           </div>
         )}
       </aside>
