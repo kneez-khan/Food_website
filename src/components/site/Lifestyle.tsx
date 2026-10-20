@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 export function Lifestyle() {
   const a = useParallax<HTMLDivElement>(-0.05);
   const b = useParallax<HTMLDivElement>(0.07);
-  const [l1, l2, l3, l4] = images.lifestyle;
+  const [l1, l2, l3, l4] = images.lifestyle as [typeof images.lifestyle[number], typeof images.lifestyle[number], typeof images.lifestyle[number], typeof images.lifestyle[number]];
 
   const Tile = ({ img, cls }: { img: { src: string; label: string }; cls: string }) => (
     <figure className={cn("group relative overflow-hidden rounded-[1.75rem]", cls)}>

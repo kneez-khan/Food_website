@@ -12,7 +12,7 @@ export const placeOrder = createServerFn({ method: "POST" })
       _name: data.name,
       _phone: data.phone,
       _address: data.address,
-      _notes: data.notes || null,
+      _notes: data.notes ?? "",
       _total: total,
       _items: lines,
     });

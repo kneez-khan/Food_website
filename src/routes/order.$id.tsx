@@ -28,7 +28,7 @@ export const Route = createFileRoute("/order/$id")({
       </div>
     </div>
   ),
-  errorComponent: ({ error }) => (
+  errorComponent: ({ error }: { error: Error }) => (
     <div className="grid min-h-screen place-items-center px-5 text-center">
       <div>
         <h1 className="text-3xl font-bold">We couldn't load your order</h1>
