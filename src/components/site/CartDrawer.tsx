@@ -45,7 +45,7 @@ export function CartDrawer() {
           )}
         </div>
         {lines.length > 0 && (
-          <div className="border-t p-6">
+          <div className="max-h-[65vh] overflow-y-auto border-t p-6">
             <div className="flex justify-between text-lg"><span>Subtotal · {count} items</span><span className="font-display font-semibold">${total.toFixed(2)}</span></div>
             <CheckoutForm />
           </div>
