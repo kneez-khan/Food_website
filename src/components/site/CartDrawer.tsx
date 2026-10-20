@@ -1,7 +1,7 @@
 import { Minus, Plus, ShoppingBag, X } from "lucide-react";
-import { toast } from "sonner";
 import { useCart } from "@/lib/cart";
 import { Button } from "./Btn";
+import { CheckoutForm } from "./CheckoutForm";
 import { cn } from "@/lib/utils";
 
 export function CartDrawer() {
