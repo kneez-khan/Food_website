@@ -32,7 +32,7 @@ export const Route = createFileRoute("/order/$id")({
     <div className="grid min-h-screen place-items-center px-5 text-center">
       <div>
         <h1 className="text-3xl font-bold">We couldn't load your order</h1>
-        <p className="mt-2 text-muted-foreground">{error.message}</p>
+        <p className="mt-2 text-muted-foreground">{(error as Error).message}</p>
         <Link to="/" className={btn({ className: "mt-6" })}>Continue shopping</Link>
       </div>
     </div>
