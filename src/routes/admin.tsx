@@ -96,7 +96,31 @@ function Dashboard({ session }: { session: Session }) {
           <li key={o.id} className="rounded-3xl bg-card p-6 shadow-soft">
             <div className="flex flex-wrap justify-between gap-2">
               <p className="font-display text-lg font-semibold">{o.order_number} · {o.customer_name}</p>
-              <p className="text-sm text-muted-foreground">{new Date(o.created_at).toLocaleString()} · {o.status} · Cash on Delivery</p>
+              <p className="text-sm text-muted-foreground">
+                {new Date(o.created_at).toLocaleString()} ·{" "}
+                <select
+                  aria-label={`Status for ${o.order_number}`}
+                  className="rounded-md border bg-card px-1 text-sm"
+                  value={o.status}
+                  onChange={async (e) => {
+                    const status = e.target.value;
+                    const prev = o.status;
+                    setOrders((os) => os?.map((x) => (x.id === o.id ? { ...x, status } : x)) ?? null);
+                    const { data, error } = await supabase.from("orders").update({ status }).eq("id", o.id).select("id");
+                    if (error || !data?.length) {
+                      setOrders((os) => os?.map((x) => (x.id === o.id ? { ...x, status: prev } : x)) ?? null);
+                      setErr("Could not update status" + (error ? ": " + error.message : "."));
+                    } else setErr(null);
+                  }}
+                >
+                  <option value="new">New</option>
+                  <option value="preparing">Preparing</option>
+                  <option value="out_for_delivery">Out for Delivery</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>{" "}
+                · Cash on Delivery
+              </p>
             </div>
             <p className="mt-1 text-sm">{o.phone} — {o.address}</p>
             {o.notes && <p className="mt-1 text-sm text-muted-foreground">Notes: {o.notes}</p>}

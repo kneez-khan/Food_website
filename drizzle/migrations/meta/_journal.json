@@ -15,6 +15,13 @@
       "when": 1792493250417,
       "tag": "0001_admin_roles_and_order_access",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792494968269,
+      "tag": "0002_order_status_admin_update",
+      "breakpoints": true
     }
   ]
 }
