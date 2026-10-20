@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, type ErrorComponentProps } from "@tanstack/react-router";
 import { CheckCircle2 } from "lucide-react";
 import { getOrder } from "@/lib/orders.functions";
 import { btn } from "@/components/site/Btn";
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/order/$id")({
       </div>
     </div>
   ),
-  errorComponent: ({ error }: { error: Error }) => (
+  errorComponent: ({ error }: ErrorComponentProps) => (
     <div className="grid min-h-screen place-items-center px-5 text-center">
       <div>
         <h1 className="text-3xl font-bold">We couldn't load your order</h1>
@@ -41,7 +41,7 @@ export const Route = createFileRoute("/order/$id")({
 });
 
 function OrderPage() {
-  const o = Route.useLoaderData();
+  const o = Route.useLoaderData()!;
   return (
     <main className="mx-auto max-w-2xl px-5 py-20 md:py-28">
       <CheckCircle2 className="h-10 w-10 text-accent" strokeWidth={1.4} />
