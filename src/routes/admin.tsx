@@ -1,145 +1,114 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { z } from "zod";
+import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-
-// CHANGE: apni asli email yahan likho (wahi jo admin account mein use karogi)
-const ADMIN_EMAIL = "kneezkhan12@gmail.com";
-
-const STATUSES = ["new", "preparing", "out for delivery", "delivered", "cancelled"];
-
-async function requireAdmin(token: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin.auth.getUser(token);
-  const u = data?.user;
-  if (error || !u || !u.email_confirmed_at || u.email?.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
-    throw new Error("Not allowed");
-  }
-  return supabaseAdmin;
-}
-
-const listOrders = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ token: z.string().min(10) }).parse(d))
-  .handler(async ({ data }) => {
-    const db = await requireAdmin(data.token);
-    const { data: orders, error } = await db
-      .from("orders")
-      .select("*, order_items(*)")
-      .order("created_at", { ascending: false });
-    if (error) throw new Error("Could not load orders");
-    return orders as any[];
-  });
-
-const setStatus = createServerFn({ method: "POST" })
-  .inputValidator((d) =>
-    z.object({ token: z.string().min(10), id: z.string().uuid(), status: z.enum(["new", "preparing", "out for delivery", "delivered", "cancelled"]) }).parse(d)
-  )
-  .handler(async ({ data }) => {
-    const db = await requireAdmin(data.token);
-    const { error } = await db.from("orders").update({ status: data.status }).eq("id", data.id);
-    if (error) throw new Error("Could not update");
-    return { ok: true };
-  });
+import { Button } from "@/components/site/Btn";
 
 export const Route = createFileRoute("/admin")({
-  component: Admin,
+  ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Admin — Fifth & Field" },
+      { name: "description", content: "Fifth & Field order administration." },
+      { property: "og:title", content: "Admin — Fifth & Field" },
+      { property: "og:description", content: "Fifth & Field order administration." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "noindex" },
+    ],
+  }),
+  component: AdminPage,
 });
 
-function Admin() {
-  const [token, setToken] = useState<string | null>(null);
+type Order = {
+  id: string; order_number: string; customer_name: string; phone: string; address: string;
+  notes: string | null; total: number; status: string; created_at: string;
+  order_items: { name: string; unit_price: number; quantity: number; line_total: number }[];
+};
+
+function AdminPage() {
+  const [session, setSession] = useState<Session | null>(null);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => { setSession(data.session); setReady(true); });
+    const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
+    return () => data.subscription.unsubscribe();
+  }, []);
+  if (!ready) return null;
+  return <main className="mx-auto max-w-5xl px-5 py-16">{session ? <Dashboard session={session} /> : <Login />}</main>;
+}
+
+function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [msg, setMsg] = useState("");
-  const [orders, setOrders] = useState<any[]>([]);
-  const [filter, setFilter] = useState("all");
-  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true); setErr(null);
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    setBusy(false);
+    if (error) setErr(error.message);
+  };
+  const input = "w-full rounded-2xl border bg-card px-4 py-2.5 text-sm outline-none focus:border-accent";
+  return (
+    <form onSubmit={submit} className="mx-auto max-w-sm space-y-4">
+      <h1 className="text-3xl font-bold">Admin sign in</h1>
+      <input className={input} type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+      <input className={input} type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+      {err && <p role="alert" className="text-sm text-destructive">{err}</p>}
+      <Button type="submit" className="w-full" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</Button>
+    </form>
+  );
+}
+
+function Dashboard({ session }: { session: Session }) {
+  const [orders, setOrders] = useState<Order[] | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setToken(data.session?.access_token ?? null));
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setToken(s?.access_token ?? null));
-    return () => sub.subscription.unsubscribe();
-  }, []);
-
-  const load = async (t: string) => {
-    try {
-      setOrders(await listOrders({ data: { token: t } }));
-      setMsg("");
-    } catch {
-      setMsg("You are not allowed to view orders.");
-      setOrders([]);
-    }
-  };
-
-  useEffect(() => {
-    if (!token) return;
-    load(token);
-    const t = setInterval(() => load(token), 15000);
-    return () => clearInterval(t);
-  }, [token]);
-
-  const login = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    setMsg(error ? "Wrong email or password" : "");
-  };
-
-  const change = async (id: string, status: string) => {
-    if (!token) return;
-    await setStatus({ data: { token, id, status: status as any } });
-    load(token);
-  };
-
-  if (!token) {
-    return (
-      <main className="mx-auto max-w-sm space-y-3 p-6">
-        <h1 className="text-2xl font-bold">Admin login</h1>
-        <input className="w-full rounded border bg-background p-3" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input className="w-full rounded border bg-background p-3" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        {msg && <p className="text-red-600">{msg}</p>}
-        <button onClick={login} disabled={loading} className="w-full rounded bg-foreground py-3 text-background">
-          {loading ? "..." : "Login"}
-        </button>
-      </main>
-    );
-  }
-
-  const shown = filter === "all" ? orders : orders.filter((o) => o.status === filter);
-  const newCount = orders.filter((o) => o.status === "new").length;
+    (async () => {
+      const { data: admin, error: rErr } = await supabase.rpc("has_role", { _user_id: session.user.id, _role: "admin" });
+      if (rErr) return setErr("Could not verify admin access.");
+      setIsAdmin(!!admin);
+      if (!admin) return;
+      const { data, error } = await supabase
+        .from("orders")
+        .select("id, order_number, customer_name, phone, address, notes, total, status, created_at, order_items(name, unit_price, quantity, line_total)")
+        .order("created_at", { ascending: false });
+      if (error) setErr("Could not load orders: " + error.message);
+      else setOrders(data as unknown as Order[]);
+    })();
+  }, [session.user.id]);
 
   return (
-    <main className="mx-auto max-w-3xl space-y-4 p-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Orders ({newCount} new)</h1>
-        <button onClick={() => supabase.auth.signOut()} className="text-sm underline">Logout</button>
+    <div>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div><h1 className="text-3xl font-bold">Orders</h1><p className="text-sm text-muted-foreground">{session.user.email}</p></div>
+        <Button variant="outline" size="sm" onClick={() => supabase.auth.signOut()}>Sign out</Button>
       </div>
-      {msg && <p className="text-red-600">{msg}</p>}
-      <select className="rounded border bg-background p-2" value={filter} onChange={(e) => setFilter(e.target.value)}>
-        <option value="all">All</option>
-        {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-      </select>
-      {shown.map((o) => (
-        <div key={o.id} className="space-y-1 rounded-lg border p-4">
-          <div className="flex justify-between">
-            <b>{o.order_number}</b>
-            <span className="text-sm">{new Date(o.created_at).toLocaleString()}</span>
-          </div>
-          <p>{o.customer_name} · {o.phone}</p>
-          <p>{o.address}</p>
-          {o.notes && <p className="italic">Note: {o.notes}</p>}
-          <ul className="text-sm">
-            {(o.order_items ?? []).map((i: any) => (
-              <li key={i.id}>{i.quantity} × {i.name}</li>
-            ))}
-          </ul>
-          <p className="font-bold">Total: ${Number(o.total).toFixed(2)}</p>
-          <select className="rounded border bg-background p-2" value={o.status ?? "new"} onChange={(e) => change(o.id, e.target.value)}>
-            {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
-      ))}
-      {shown.length === 0 && <p className="text-muted-foreground">No orders.</p>}
-    </main>
+      {err && <p role="alert" className="mt-6 text-destructive">{err}</p>}
+      {isAdmin === false && <p className="mt-6 text-destructive">This account does not have admin access.</p>}
+      {orders && orders.length === 0 && <p className="mt-6 text-muted-foreground">No orders yet.</p>}
+      <ul className="mt-8 space-y-4">
+        {orders?.map((o) => (
+          <li key={o.id} className="rounded-3xl bg-card p-6 shadow-soft">
+            <div className="flex flex-wrap justify-between gap-2">
+              <p className="font-display text-lg font-semibold">{o.order_number} · {o.customer_name}</p>
+              <p className="text-sm text-muted-foreground">{new Date(o.created_at).toLocaleString()} · {o.status} · Cash on Delivery</p>
+            </div>
+            <p className="mt-1 text-sm">{o.phone} — {o.address}</p>
+            {o.notes && <p className="mt-1 text-sm text-muted-foreground">Notes: {o.notes}</p>}
+            <ul className="mt-3 divide-y text-sm">
+              {o.order_items.map((i, k) => (
+                <li key={k} className="flex justify-between py-2"><span>{i.quantity} × {i.name} @ ${Number(i.unit_price).toFixed(2)}</span><span>${Number(i.line_total).toFixed(2)}</span></li>
+              ))}
+            </ul>
+            <p className="mt-2 text-right font-semibold">Total ${Number(o.total).toFixed(2)}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

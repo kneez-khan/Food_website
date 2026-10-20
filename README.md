@@ -1,23 +1,29 @@
-# Fifth & Field
+# Welcome to your Lovable project
 
-Online food ordering website for a modern NYC food and café brand.
+This project was built with [Lovable](https://lovable.dev).
 
-**Live website:** https://screenshot-perfect-1814.lovable.app
+## Build with Lovable
 
-## Features
+Open your project in the [Lovable editor](https://lovable.dev) and keep building.
 
-- Interactive menu with category filters
-- Basket and Cash on Delivery checkout
-- Order confirmation page
-- Fully responsive (mobile, tablet, desktop)
+- **Ship faster**: describe what you want to build and Lovable handles the code.
+- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
+- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
 
-## Tech Stack
+## Development
 
-- React + TypeScript
-- Tailwind CSS
-- Vite
+Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
 
-## Run locally
-
-npm install
+```sh
+git clone <this-repository-url>
+cd <repository-name>
+npm i
 npm run dev
+```
+
+## Built with
+
+- TanStack Start
+- TypeScript
+- React
+- Tailwind CSS
